@@ -558,7 +558,7 @@ with tab3:
                 r=vals, theta=cats, name=label,
                 fill="toself",
                 line=dict(color=color, width=1.5),
-                fillcolor=color.replace(")", ",0.08)").replace("rgb","rgba") if "rgb" in color else color + "15",
+                fillcolor="rgba(0, 212, 255, 0.08)",
             ))
 
         fig_radar.update_layout(
