@@ -599,6 +599,9 @@ with tab3:
 # ═══════════════════════════════════════════════════════════════════════════════
 # TAB 4 – ANOMALY RADAR
 # ═══════════════════════════════════════════════════════════════════════════════
+# ═══════════════════════════════════════════════════════════════════════════════
+# TAB 4 – ANOMALY RADAR
+# ═══════════════════════════════════════════════════════════════════════════════
 with tab4:
     st.markdown('<div class="section-header">Anomaly Detection – Isolation Forest</div>',
                 unsafe_allow_html=True)
@@ -607,64 +610,94 @@ with tab4:
     anom_df = detect_anomalies(df_filt)
 
     if "is_anomaly" in anom_df.columns:
+
+        # ---- FIX TYPES FOR STREAMLIT CLOUD ----
+        anom_df["is_anomaly"] = anom_df["is_anomaly"].fillna(False).astype(str)
+
+        if "anomaly_score" in anom_df.columns:
+            anom_df["anomaly_score_abs"] = anom_df["anomaly_score"].abs()
+        else:
+            anom_df["anomaly_score_abs"] = 1
+
         c1, c2 = st.columns([2, 1])
 
         with c1:
+            scatter_df = anom_df.dropna(subset=["gdp_per_capita", "radiance_2023"])
+
             fig_anom = px.scatter(
-                anom_df.dropna(subset=["gdp_per_capita","radiance_2023"]),
-                x="gdp_per_capita", y="radiance_2023",
+                scatter_df,
+                x="gdp_per_capita",
+                y="radiance_2023",
                 color="is_anomaly",
+                symbol="is_anomaly",
                 hover_name="city",
-                hover_data={"anomaly_score":":.3f",
-                            "is_anomaly": False},
-                color_discrete_map={True: PALETTE["red"], False: PALETTE["green"]},
-                size="anomaly_score" if "anomaly_score" in anom_df else None,
+                hover_data={"anomaly_score":":.3f"},
+                color_discrete_map={
+                    "True": PALETTE["red"],
+                    "False": PALETTE["green"]
+                },
+                size="anomaly_score_abs",
                 size_max=20,
                 labels={
-                    "gdp_per_capita":  "GDP per Capita (USD)",
-                    "radiance_2023":   "Radiance (nW/cm²/sr)",
-                    "is_anomaly":      "Anomaly",
+                    "gdp_per_capita": "GDP per Capita (USD)",
+                    "radiance_2023": "Radiance (nW/cm²/sr)",
+                    "is_anomaly": "Anomaly"
                 },
-                symbol="is_anomaly",
             )
+
             fig_anom.update_layout(**PLOTLY_LAYOUT, height=420)
             st.plotly_chart(fig_anom, use_container_width=True)
 
         with c2:
             st.markdown("**Flagged Cities**")
-            flagged = anom_df[anom_df["is_anomaly"]].sort_values(
-                "anomaly_score")[["city","radiance_2023","gdp_per_capita","anomaly_score"]]
 
-            for _, row in flagged.iterrows():
-                direction = "🔆 Over-lit" if row.get("radiance_residual", 0) > 0 else "🌑 Under-lit"
-                st.markdown(f"""
-                <div style='background:#0F1525; border:1px solid rgba(255,75,75,0.3);
-                            border-radius:8px; padding:0.7rem 1rem; margin-bottom:0.5rem;'>
-                    <div style='font-weight:600; color:#E8EAF0; font-size:0.85rem;'>{row["city"]}</div>
-                    <div style='font-size:0.72rem; color:#7A8AAD; margin-top:0.2rem;'>
-                        {direction} &nbsp;·&nbsp;
-                        Radiance: <b style='color:#00D4FF;'>{row["radiance_2023"]:.1f}</b> nW
-                        &nbsp;·&nbsp; Score: {row["anomaly_score"]:.3f}
+            flagged = anom_df[anom_df["is_anomaly"] == "True"].sort_values("anomaly_score")
+
+            if not flagged.empty:
+                flagged = flagged[["city", "radiance_2023", "gdp_per_capita", "anomaly_score"]]
+
+                for _, row in flagged.iterrows():
+                    st.markdown(f"""
+                    <div style='background:#0F1525; border:1px solid rgba(255,75,75,0.3);
+                                border-radius:8px; padding:0.7rem 1rem; margin-bottom:0.5rem;'>
+                        <div style='font-weight:600; color:#E8EAF0; font-size:0.85rem;'>{row["city"]}</div>
+                        <div style='font-size:0.72rem; color:#7A8AAD; margin-top:0.2rem;'>
+                            Score: {row["anomaly_score"]:.3f}
+                            &nbsp;·&nbsp;
+                            Radiance: <b style='color:#00D4FF;'>{row["radiance_2023"]:.1f}</b> nW
+                        </div>
                     </div>
-                </div>""", unsafe_allow_html=True)
+                    """, unsafe_allow_html=True)
+            else:
+                st.info("No anomalies detected.")
 
-        # Anomaly score waterfall
         st.markdown('<div class="section-header">Isolation Forest Scores</div>',
                     unsafe_allow_html=True)
-        anom_sorted = anom_df.sort_values("anomaly_score").dropna(subset=["anomaly_score"])
+
+        anom_sorted = anom_df.dropna(subset=["anomaly_score"]).sort_values("anomaly_score")
 
         fig_scores = px.bar(
-            anom_sorted, x="city", y="anomaly_score",
+            anom_sorted,
+            x="city",
+            y="anomaly_score",
             color="is_anomaly",
-            color_discrete_map={True: PALETTE["red"], False: PALETTE["primary"]},
-            labels={"anomaly_score":"Isolation Score","city":"City","is_anomaly":"Anomaly"},
+            color_discrete_map={
+                "True": PALETTE["red"],
+                "False": PALETTE["primary"]
+            },
+            labels={
+                "anomaly_score": "Isolation Score",
+                "city": "City",
+                "is_anomaly": "Anomaly"
+            },
         )
-        fig_scores.add_hline(y=anom_sorted["anomaly_score"].quantile(0.15),
-                              line_dash="dot", line_color=PALETTE["amber"],
-                              annotation_text="Anomaly threshold",
-                              annotation_font_color=PALETTE["amber"])
-        fig_scores.update_layout(**PLOTLY_LAYOUT, height=320,
-                                  xaxis_tickangle=-45)
+
+        fig_scores.update_layout(
+            **PLOTLY_LAYOUT,
+            height=320,
+            xaxis_tickangle=-45
+        )
+
         st.plotly_chart(fig_scores, use_container_width=True)
 
 
