@@ -777,14 +777,11 @@ with tab5:
     })
 
     st.dataframe(
-       st.dataframe(
-          snap.round(2),
-          hide_index=True,
-          use_container_width=True
-        ).background_gradient(subset=["Δ Change (%)"], cmap="RdYlGn"),
+      st.dataframe(
+        snap.round(2),
         use_container_width=True,
         hide_index=True,
-    )
+    ))
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
