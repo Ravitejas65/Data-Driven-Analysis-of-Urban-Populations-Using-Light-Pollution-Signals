@@ -828,11 +828,13 @@ with tab6:
         line=dict(color=PALETTE["green"], width=2), marker_size=5,
     ), secondary_y=True)
 
+    fig_dual.update_layout(PLOTLY_LAYOUT)
+
     fig_dual.update_layout(
-        **PLOTLY_LAYOUT, height=380,
-        xaxis_tickangle=-45,
-        legend=dict(orientation="h", y=1.05),
-    )
+       height=380,
+       xaxis_tickangle=-45,
+       legend=dict(orientation="h", y=1.05),
+)
     fig_dual.update_yaxes(title_text="Radiance (nW/cm²/sr)", secondary_y=False,
                            gridcolor="rgba(255,255,255,0.04)")
     fig_dual.update_yaxes(title_text="Electrification (%)", secondary_y=True)
