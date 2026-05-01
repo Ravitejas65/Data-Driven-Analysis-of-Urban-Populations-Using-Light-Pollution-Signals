@@ -777,11 +777,11 @@ with tab5:
     })
 
     st.dataframe(
-        snap.style.format({
-            "2023 Radiance": "{:.1f}",
-            "2030 Forecast": "{:.1f}",
-            "Δ Change (%)":  "{:+.1f}%",
-        }).background_gradient(subset=["Δ Change (%)"], cmap="RdYlGn"),
+       st.dataframe(
+          snap.round(2),
+          hide_index=True,
+          use_container_width=True
+        ).background_gradient(subset=["Δ Change (%)"], cmap="RdYlGn"),
         use_container_width=True,
         hide_index=True,
     )
