@@ -777,11 +777,10 @@ with tab5:
     })
 
     st.dataframe(
-      st.dataframe(
-        snap.round(2),
-        use_container_width=True,
-        hide_index=True,
-    ))
+       snap.round(2),
+       use_container_width=True,
+       hide_index=True,
+)
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
